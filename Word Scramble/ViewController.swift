@@ -17,6 +17,16 @@ class ViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Restart", style: .plain, target: self, action: #selector(startGame))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(promptForAnswer))
         
+        let defaults = UserDefaults.standard
+        
+        if let savedTitle = defaults.string(forKey: "currentWord") {
+            title = savedTitle
+        }
+        
+        if let savedWords = defaults.object(forKey: "usedWords") as? [String] {
+            usedWords = savedWords
+        }
+        
         if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: startWordsURL) {
                 allWords = startWords.components(separatedBy: "\n")
@@ -27,11 +37,14 @@ class ViewController: UITableViewController {
             allWords = ["silkworm"]
         }
         
-        startGame()
+        if usedWords.isEmpty {
+            startGame()
+        }
     }
     
     @objc func startGame() {
         title = allWords.randomElement()
+        UserDefaults.standard.set(title, forKey: "currentWord")
         usedWords.removeAll(keepingCapacity: true)
         tableView.reloadData()
     }
@@ -69,6 +82,8 @@ class ViewController: UITableViewController {
                     if isOriginal(word: lowercassedAnswer) {
                         if isReal(word: lowercassedAnswer) {
                             usedWords.insert(lowercassedAnswer, at: 0)
+                            
+                            UserDefaults.standard.set(usedWords, forKey: "usedWords")
                             
                             let indexPath = IndexPath(row: 0, section: 0)
                             tableView.insertRows(at: [indexPath], with: .automatic)
